@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import sys
 import random
 
@@ -7,6 +9,8 @@ def get_arguments():
     
     #List of lists for all the clauses
     clauses = []
+
+    random.seed(1)
 
     filename = open(sys.argv[1], "r")
 
@@ -80,9 +84,9 @@ class Solver():
         
         return random.choice(falsified_clauses)
 
-    def true_lit_count(self, clause):
-        
-        return len([1 for i in map(int,clause) if i >= 0])
+    def true_lit_count(self, index):
+
+        return len([1 for i in self.clauses[index-2] if i >= 0])
     
     # brk(x) es el nombre de clausules satisfactibles que seran insatisfactibles si girem la variable x
     def compute_break(self, fvariable, brkmin):
@@ -90,8 +94,8 @@ class Solver():
         brk = 0
         if fvariable >= 0:
             
-            for clause in [c for c in self.clauses if fvariable in c]:
-                if self.true_lit_count(clause) == 1:
+            for index in self.pos_order[int(fvariable)]:
+                if self.true_lit_count(index) == 1:
                     brk = brk + 1
                 if brk > brkmin:
                     pass  
@@ -99,8 +103,8 @@ class Solver():
 
         else:
             
-            for clause in [c for c in self.clauses if fvariable in c]:
-                if self.true_lit_count(clause) == 1:
+            for index in self.pos_order[int(fvariable)]:
+                if self.true_lit_count(index) == 1:
                     brk = brk + 1
                 if brk > brkmin:
                     pass
@@ -148,8 +152,7 @@ class Solver():
         
         max_flips = self.n_vars * max_flips_proportion
         rand_interpretation = Interpretation(self.n_vars).random_interpretation()
-
-
+      
         while 1:
 
             for _ in xrange(max_flips):
