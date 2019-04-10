@@ -10,7 +10,7 @@ def get_arguments():
     #List of lists for all the clauses
     clauses = []
 
-    random.seed(1)
+    random.seed(None)
 
     filename = open(sys.argv[1], "r")
 
@@ -27,9 +27,7 @@ def get_arguments():
             n_vars = int(n_vars)
             #pos_order = [[]] * (n_vars)
             pos_order = [[] for _ in xrange( n_vars + 1)]
-            neg_order = [[] for _ in xrange( n_vars + 1)]
-           
-        
+                   
         else:
 
             tmp = line.split()
@@ -40,14 +38,10 @@ def get_arguments():
                 if literal > 0:
                     pos_order[literal].append(i)
             
-                else:
-                    literal = -literal
-                    neg_order[literal].append(i)
-        
             # clause_length = len(tmp)
             clauses += [tmp]
     
-    return n_vars, n_clauses, clauses, pos_order, neg_order
+    return n_vars, n_clauses, clauses, pos_order
 
 class Interpretation():
 
@@ -76,7 +70,7 @@ class Solver():
 
     def __init__(self):
 
-        self.n_vars, self.n_clauses, self.clauses, self.pos_order, self.neg_order = get_arguments()
+        self.n_vars, self.n_clauses, self.clauses, self.pos_order = get_arguments()
         self.n_vars = int(self.n_vars)
 
     
@@ -89,7 +83,7 @@ class Solver():
         return len([1 for i in self.clauses[index-2] if i >= 0])
     
     # brk(x) es el nombre de clausules satisfactibles que seran insatisfactibles si girem la variable x
-    def compute_break(self, fvariable, brkmin):
+    def compute_break(self, fvariable):
 
         brk = 0
         if fvariable >= 0:
@@ -97,8 +91,6 @@ class Solver():
             for index in self.pos_order[int(fvariable)]:
                 if self.true_lit_count(index) == 1:
                     brk = brk + 1
-                if brk > brkmin:
-                    pass  
             return brk
 
         else:
@@ -106,9 +98,6 @@ class Solver():
             for index in self.pos_order[int(fvariable)]:
                 if self.true_lit_count(index) == 1:
                     brk = brk + 1
-                if brk > brkmin:
-                    pass
-           
             return brk 
 
 
@@ -120,7 +109,7 @@ class Solver():
         fclause = self.get_rand_falsified(falsified_clauses)
     
         for fvariable in fclause:
-            brk = self.compute_break(fvariable, brkmin)
+            brk = self.compute_break(fvariable)
 
             if brk < brkmin:
                 brkmin = brk
@@ -148,43 +137,36 @@ class Solver():
     
     
             
-    def run(self, max_flips_proportion = 3):
+    def run(self):
         
-        max_flips = self.n_vars * max_flips_proportion
         rand_interpretation = Interpretation(self.n_vars).random_interpretation()
       
         while 1:
-
-            for _ in xrange(max_flips):
-    
-                falsified_clauses = []
-                positive_clauses = []
+            falsified_clauses = []
             
-            
-                for l in self.clauses:
-                    length = len(l)
-                    for lit in l:
-                        lit = int(lit)
-                        if lit == rand_interpretation[abs(lit)]:
-                            break
-                        else:
-                            length -=1
+            for l in self.clauses:
+                length = len(l)
+                for lit in l:
+                    lit = int(lit)
+                    if lit == rand_interpretation[abs(lit)]:
+                        break
+                    else:
+                        length -=1
 
-                    if length == 0:
-                        falsified_clauses.append(l)
+                if length == 0:
+                    falsified_clauses.append(l)
                     
-                if not falsified_clauses:
+            if not falsified_clauses:
 
-                    return rand_interpretation
+                return rand_interpretation
 
 
-                fvariable = int(self.max_sat(falsified_clauses))
+            fvariable = int(self.max_sat(falsified_clauses))
                 
-                rand_interpretation[abs(fvariable)] *= -1
+            rand_interpretation[abs(fvariable)] *= -1
         
      
 if __name__ == '__main__':
     my_solver = Solver().run()
     print 's SATISFIABLE'
     print 'v ' + ' '.join(map(str, my_solver[1:])) + ' 0'
-
